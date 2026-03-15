@@ -1,46 +1,31 @@
-# 简历分块生成 GUI 工具
+# CV Chunk Studio (Offline GUI Resume Generator)
 
-一个基于 `Tkinter` 的桌面工具，用于把你的全部经历长期存储为「内容块」，并在每次投递前按岗位有选择地拼接简历。
+This is a lightweight GUI tool for building targeted resumes during mass applications:
 
-## 功能
+- Store your full experience/skills library once ("chunks")
+- For each job, create a profile and select only the relevant chunks (A + C, exclude B)
+- Export to Markdown, plain text, Word-friendly `.doc`, or print to PDF
 
-- **分版块管理**
-  - 教育经历（单文本框）
-  - 实习经历（可新增多条：名称、单位、时间段、职责）
-  - 项目经历（可新增多条：名称、单位/团队、时间段、职责）
-  - 个人技能（可新增多条）
-  - 个人评价（可新增多条）
-- **分 chunk 存储与复用**
-  - 所有内容保存到本地 JSON 数据库
-  - 生成时按需勾选（例如只勾选 A、C 项目，B 仍保留在库里）
-- **多格式导出**
-  - TXT / Markdown / DOCX / PDF
+## Run
 
-## 运行环境
+Requirements: Node.js.
 
-- Python 3.10+
-
-## 安装与启动
-
-```bash
-pip install -r requirements.txt
-python app.py
+```powershell
+node server.js
 ```
 
-## 数据存储位置
+Open `http://127.0.0.1:5173` in your browser.
 
-默认保存在：
+## Storage
 
-- `~/.resume_chunk_builder/resume_data.json`
+- Data is stored in the browser (LocalStorage) under key `cv_chunk_studio:v1`
+- Use **Backup JSON** regularly to keep a portable copy
+- Use **Restore JSON** to move to a new machine/browser
 
-## 使用说明
+## Export
 
-1. 在 **内容管理** 页填写和维护你的全部经历与技能（新增/更新/删除）。
-2. 点击 **保存全部内容**，工具会持久化存储。
-3. 切换到 **按需生成** 页，勾选本次想加入简历的条目。
-4. 选择导出格式（TXT/Markdown/DOCX/PDF），保存到目标位置。
+- Markdown: `resume.md`
+- Plain text: `resume.txt`
+- Word: `resume.doc` (HTML-based, opens in Word/WPS)
+- PDF: click **Print / Save PDF** and choose "Save as PDF" in the browser print dialog
 
-## 说明
-
-- `DOCX` 导出依赖 `python-docx`。
-- `PDF` 导出依赖 `reportlab`，并使用系统字体（默认 DejaVuSans）。

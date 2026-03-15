@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>CV Chunk Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand" role="banner">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <div class="brand-title">CV Chunk Studio</div>
+          <div class="brand-subtitle">Store everything. Export what you need.</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn btn-ghost" id="btnBackup" type="button">Backup JSON</button>
+        <button class="btn btn-ghost" id="btnRestore" type="button">Restore JSON</button>
+        <input id="fileRestore" type="file" accept="application/json" hidden />
+      </div>
+    </header>
+
+    <main class="layout">
+      <nav class="sidebar" aria-label="Primary">
+        <button class="nav-item" id="navLibrary" type="button" data-view="library" aria-selected="true">
+          Library
+        </button>
+        <button class="nav-item" id="navGenerate" type="button" data-view="generate" aria-selected="false">
+          Generate
+        </button>
+        <button class="nav-item" id="navSettings" type="button" data-view="settings" aria-selected="false">
+          Settings
+        </button>
+      </nav>
+
+      <section class="content">
+        <section class="view" id="view-library">
+          <div class="grid">
+            <section class="card" aria-label="Education">
+              <div class="card-head">
+                <h2>Education</h2>
+                <button class="btn btn-primary" id="btnSaveEducation" type="button">Save</button>
+              </div>
+              <p class="help">Single text box. Use line breaks freely.</p>
+              <textarea id="educationText" class="textarea" rows="8" placeholder="School / Major / Degree / GPA / Awards..."></textarea>
+            </section>
+
+            <section class="card" aria-label="Internships">
+              <div class="card-head">
+                <h2>Internships</h2>
+                <button class="btn btn-primary" id="btnAddInternship" type="button">Add</button>
+              </div>
+              <p class="help">Each internship is a stored chunk. Select chunks later when generating.</p>
+              <div id="listInternships" class="list" role="list"></div>
+            </section>
+
+            <section class="card" aria-label="Projects">
+              <div class="card-head">
+                <h2>Projects</h2>
+                <button class="btn btn-primary" id="btnAddProject" type="button">Add</button>
+              </div>
+              <p class="help">Store every project once. Build targeted resumes by picking subsets.</p>
+              <div id="listProjects" class="list" role="list"></div>
+            </section>
+
+            <section class="card" aria-label="Skills">
+              <div class="card-head">
+                <h2>Skills</h2>
+                <button class="btn btn-primary" id="btnAddSkill" type="button">Add</button>
+              </div>
+              <p class="help">One skill per chunk. Keep them short and searchable.</p>
+              <div id="listSkills" class="list" role="list"></div>
+            </section>
+
+            <section class="card" aria-label="Self Evaluation">
+              <div class="card-head">
+                <h2>Self Evaluation</h2>
+                <button class="btn btn-primary" id="btnAddEvaluation" type="button">Add</button>
+              </div>
+              <p class="help">Store multiple lines. Pick the ones that match the job description.</p>
+              <div id="listEvaluations" class="list" role="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-generate" hidden>
+          <div class="split">
+            <section class="card" aria-label="Profiles and Selection">
+              <div class="card-head">
+                <h2>Selection</h2>
+                <div class="row">
+                  <select id="profileSelect" class="select" aria-label="Profile"></select>
+                  <button class="btn btn-ghost" id="btnNewProfile" type="button">New</button>
+                  <button class="btn btn-ghost" id="btnRenameProfile" type="button">Rename</button>
+                  <button class="btn btn-danger" id="btnDeleteProfile" type="button">Delete</button>
+                </div>
+              </div>
+              <p class="help">Profiles store your per-job selection (A+C etc). Your full library stays intact.</p>
+
+              <details class="details" open>
+                <summary>Internships to include</summary>
+                <div id="pickInternships" class="picklist"></div>
+              </details>
+
+              <details class="details" open>
+                <summary>Projects to include</summary>
+                <div id="pickProjects" class="picklist"></div>
+              </details>
+
+              <details class="details" open>
+                <summary>Skills to include</summary>
+                <div id="pickSkills" class="picklist"></div>
+              </details>
+
+              <details class="details" open>
+                <summary>Self evaluation to include</summary>
+                <div id="pickEvaluations" class="picklist"></div>
+              </details>
+            </section>
+
+            <section class="card" aria-label="Preview and Export">
+              <div class="card-head">
+                <h2>Preview</h2>
+                <div class="row">
+                  <button class="btn btn-ghost" id="btnCopyMarkdown" type="button">Copy</button>
+                  <button class="btn btn-primary" id="btnDownloadMd" type="button">Download .md</button>
+                  <button class="btn btn-primary" id="btnDownloadTxt" type="button">Download .txt</button>
+                </div>
+              </div>
+              <p class="help">DOC uses a Word-friendly HTML file. PDF uses browser printing.</p>
+              <div class="row">
+                <button class="btn btn-primary" id="btnDownloadDoc" type="button">Download .doc</button>
+                <button class="btn btn-primary" id="btnPrintPdf" type="button">Print / Save PDF</button>
+              </div>
+              <textarea id="markdownPreview" class="textarea mono" rows="26" spellcheck="false"></textarea>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings" hidden>
+          <div class="grid">
+            <section class="card" aria-label="Storage">
+              <div class="card-head">
+                <h2>Storage</h2>
+                <button class="btn btn-danger" id="btnResetAll" type="button">Reset All</button>
+              </div>
+              <p class="help">
+                Data is stored in your browser (LocalStorage). Use Backup JSON regularly if you care about your
+                library.
+              </p>
+              <div id="storageStats" class="stats"></div>
+            </section>
+
+            <section class="card" aria-label="Tips">
+              <div class="card-head">
+                <h2>Tips</h2>
+              </div>
+              <ul class="tips">
+                <li>Write duties as bullet-ready lines (one responsibility per line).</li>
+                <li>Keep skills atomic, so you can mix and match later.</li>
+                <li>Create one profile per job, then export with one click.</li>
+              </ul>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog class="dialog" id="editDialog">
+      <form method="dialog" class="dialog-form" id="editForm">
+        <div class="dialog-head">
+          <div>
+            <div class="dialog-title" id="dialogTitle">Edit</div>
+            <div class="dialog-subtitle" id="dialogSubtitle">Chunk editor</div>
+          </div>
+          <button class="btn btn-ghost" value="cancel" type="submit">Close</button>
+        </div>
+
+        <input type="hidden" id="editKind" />
+        <input type="hidden" id="editId" />
+
+        <div class="dialog-grid" id="dialogFields"></div>
+
+        <div class="dialog-actions">
+          <button class="btn btn-danger" id="btnDialogDelete" type="button">Delete</button>
+          <div class="spacer"></div>
+          <button class="btn btn-primary" id="btnDialogSave" value="default" type="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
+
