@@ -48,7 +48,10 @@
                 <h2>Personal Information</h2>
                 <button class="btn btn-primary" id="btnSavePersonalInfo" type="button">Save</button>
               </div>
-              <p class="help">Basic contact details shown at the top of exported resumes.</p>
+              <p class="help">
+                Basic contact details shown at the top of exported resumes. Suggested fields: full name, headline,
+                phone, email, location, website, GitHub, LinkedIn.
+              </p>
               <div class="form-grid">
                 <div class="field">
                   <label for="personal_fullName">Full Name</label>
@@ -100,7 +103,7 @@
                 <h2>Education</h2>
                 <button class="btn btn-primary" id="btnSaveEducation" type="button">Save</button>
               </div>
-              <p class="help">Single text box. Use line breaks freely.</p>
+              <p class="help">Single text box. Suggested format: school / major / degree / GPA / awards.</p>
               <textarea id="educationText" class="textarea" rows="8" placeholder="School / Major / Degree / GPA / Awards..."></textarea>
             </section>
 
@@ -127,7 +130,10 @@
                 <h2>Skills</h2>
                 <button class="btn btn-primary" id="btnAddSkill" type="button">Add</button>
               </div>
-              <p class="help">One skill per chunk. Keep them short and searchable.</p>
+              <p class="help">
+                One chunk can now be a longer text block. Example: strong in Rust, SQL, backend system design, and
+                performance tuning.
+              </p>
               <div id="listSkills" class="list" role="list"></div>
             </section>
 
@@ -136,7 +142,10 @@
                 <h2>Self Evaluation</h2>
                 <button class="btn btn-primary" id="btnAddEvaluation" type="button">Add</button>
               </div>
-              <p class="help">Store multiple lines. Pick the ones that match the job description.</p>
+              <p class="help">
+                Supports longer multi-line text. Example: strong ownership, clear communication, fast learning, and a
+                solid execution rhythm.
+              </p>
               <div id="listEvaluations" class="list" role="list"></div>
             </section>
           </div>
@@ -232,7 +241,7 @@
             <div class="dialog-title" id="dialogTitle">Edit</div>
             <div class="dialog-subtitle" id="dialogSubtitle">Chunk editor</div>
           </div>
-          <button class="btn btn-ghost" value="cancel" type="submit">Close</button>
+          <button class="btn btn-ghost" id="btnDialogClose" type="button">Close</button>
         </div>
 
         <input type="hidden" id="editKind" />

@@ -372,6 +372,17 @@ body {
   border-radius: var(--radius2);
 }
 
+.dialog .btn-ghost {
+  background: rgba(17, 24, 39, 0.04);
+  border-color: rgba(17, 24, 39, 0.12);
+  color: var(--ink);
+}
+
+.dialog .btn-ghost:hover {
+  background: rgba(17, 24, 39, 0.08);
+  border-color: rgba(17, 24, 39, 0.18);
+}
+
 .dialog-head {
   display: flex;
   align-items: flex-start;

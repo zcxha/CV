@@ -178,6 +178,19 @@ function normalizeLines(s) {
   return lines;
 }
 
+function truncateText(text, max = 88) {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 3).trimEnd()}...`;
+}
+
+function summarizeTextBlock(text) {
+  const lines = normalizeLines(text);
+  if (!lines.length) return { title: "(empty)", meta: "" };
+  const title = truncateText(lines[0]);
+  if (lines.length === 1) return { title, meta: "" };
+  return { title, meta: `${lines.length} lines` };
+}
+
 function buildResumeModel(state) {
   const profile = profileById(state, state.ui.activeProfileId);
   const getSelected = (kind, ids) => {
@@ -254,8 +267,11 @@ function renderMarkdown(model) {
     push("_(none)_");
   } else {
     for (const s of model.skills) {
-      const text = (s.text || "").trim();
-      if (text) push(`- ${text}`);
+      const lines = normalizeLines(s.text);
+      if (lines.length) {
+        push(lines.join("  \n"));
+        push("");
+      }
     }
   }
   push("");
@@ -265,8 +281,11 @@ function renderMarkdown(model) {
     push("_(none)_");
   } else {
     for (const e of model.evaluations) {
-      const text = (e.text || "").trim();
-      if (text) push(`- ${text}`);
+      const lines = normalizeLines(e.text);
+      if (lines.length) {
+        push(lines.join("  \n"));
+        push("");
+      }
     }
   }
   push("");
@@ -319,16 +338,20 @@ function renderPlainText(model) {
   head("Skills");
   if (!model.skills.length) push("(none)");
   for (const s of model.skills) {
-    const text = (s.text || "").trim();
-    if (text) push(`* ${text}`);
+    const lines = normalizeLines(s.text);
+    if (!lines.length) continue;
+    for (const line of lines) push(line);
+    push("");
   }
   push("");
 
   head("Self Evaluation");
   if (!model.evaluations.length) push("(none)");
   for (const e of model.evaluations) {
-    const text = (e.text || "").trim();
-    if (text) push(`* ${text}`);
+    const lines = normalizeLines(e.text);
+    if (!lines.length) continue;
+    for (const line of lines) push(line);
+    push("");
   }
   push("");
 
@@ -345,6 +368,7 @@ function renderDocHtml(model) {
     .hero h1{margin-bottom:4px;}
     .hero-line{font-size:11pt;line-height:1.4;margin:2px 0;}
     .meta{color:#555;font-size:10.5pt;margin-top:2px;}
+    .text-block{font-size:11pt;line-height:1.45;margin:0 0 10px;}
     ul{margin:6px 0 10px 18px;}
     li{margin:2px 0;}
     pre{white-space:pre-wrap;font-family:inherit;font-size:11pt;line-height:1.35;margin:0;}
@@ -372,6 +396,11 @@ function renderDocHtml(model) {
     return `<ul>${lines.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}</ul>`;
   };
 
+  const textBlocks = (items) => {
+    const blocks = items.map((x) => clampText(x.text).trim()).filter(Boolean);
+    return blocks.map((text) => `<div class="text-block">${sectionLines(text)}</div>`).join("");
+  };
+
   return `<!doctype html>
 <html><head>
   <meta charset="utf-8"/>
@@ -395,10 +424,10 @@ function renderDocHtml(model) {
   ${model.projects.length ? model.projects.map(itemToHtml).join("") : "<div>(none)</div>"}
 
   <h2>Skills</h2>
-  ${model.skills.length ? bullets(model.skills) : "<div>(none)</div>"}
+  ${model.skills.length ? textBlocks(model.skills) : "<div>(none)</div>"}
 
   <h2>Self Evaluation</h2>
-  ${model.evaluations.length ? bullets(model.evaluations) : "<div>(none)</div>"}
+  ${model.evaluations.length ? textBlocks(model.evaluations) : "<div>(none)</div>"}
 </body></html>`;
 }
 
@@ -447,11 +476,9 @@ function renderList(container, items, kind) {
   for (const it of items) {
     const el = document.createElement("div");
     el.className = "item";
-    const title =
-      kind === "skills" || kind === "evaluations"
-        ? (it.text || "").trim() || "(empty)"
-        : (it.title || "").trim() || "(Untitled)";
-    const meta = kind === "skills" || kind === "evaluations" ? "" : fmtItemMeta(it);
+    const summary = kind === "skills" || kind === "evaluations" ? summarizeTextBlock(it.text) : null;
+    const title = summary ? summary.title : (it.title || "").trim() || "(Untitled)";
+    const meta = summary ? summary.meta : fmtItemMeta(it);
     el.innerHTML = `
       <div class="item-row">
         <div>
@@ -492,11 +519,9 @@ function renderPicklist(container, items, kind, state) {
   for (const it of items) {
     const row = document.createElement("label");
     row.className = "pickrow";
-    const title =
-      kind === "skills" || kind === "evaluations"
-        ? (it.text || "").trim() || "(empty)"
-        : (it.title || "").trim() || "(Untitled)";
-    const meta = kind === "skills" || kind === "evaluations" ? "" : fmtItemMeta(it);
+    const summary = kind === "skills" || kind === "evaluations" ? summarizeTextBlock(it.text) : null;
+    const title = summary ? summary.title : (it.title || "").trim() || "(Untitled)";
+    const meta = summary ? summary.meta : fmtItemMeta(it);
     row.innerHTML = `
       <input type="checkbox" ${selected.has(it.id) ? "checked" : ""} data-id="${escapeHtml(it.id)}"/>
       <div>
@@ -581,13 +606,15 @@ function openEditDialog(kind, idOrNull) {
   const fields = document.getElementById("dialogFields");
   const title = document.getElementById("dialogTitle");
   const subtitle = document.getElementById("dialogSubtitle");
+  const btnClose = document.getElementById("btnDialogClose");
   const inputKind = document.getElementById("editKind");
   const inputId = document.getElementById("editId");
   const btnDelete = document.getElementById("btnDialogDelete");
+  const btnSave = document.getElementById("btnDialogSave");
 
   inputKind.value = kind;
 
-  const isSimpleText = kind === "skills" || kind === "evaluations";
+  const isTextBlock = kind === "skills" || kind === "evaluations";
   const list = state[kind];
   const existing = idOrNull ? list.find((x) => x.id === idOrNull) : null;
   const isNew = !existing;
@@ -595,7 +622,9 @@ function openEditDialog(kind, idOrNull) {
   inputId.value = id;
 
   title.textContent = `${isNew ? "Add" : "Edit"} ${kind}`;
-  subtitle.textContent = isSimpleText ? "Single-line chunk" : "Structured chunk";
+  subtitle.textContent = isTextBlock ? "Multi-line text block" : "Structured chunk";
+  btnSave.textContent = isNew ? "Add" : "Save";
+  btnClose.onclick = () => dialog.close();
   btnDelete.style.display = isNew ? "none" : "inline-flex";
   btnDelete.onclick = () => {
     deleteItem(kind, id);
@@ -625,12 +654,17 @@ function openEditDialog(kind, idOrNull) {
     return wrap;
   };
 
-  if (isSimpleText) {
+  if (isTextBlock) {
     fields.appendChild(
       mkField("Text", "field_text", {
         wide: true,
+        multiline: true,
+        rows: 10,
         value: existing?.text ?? "",
-        placeholder: kind === "skills" ? "e.g. Rust / CUDA / SQL / PyTorch..." : "e.g. Fast learner, strong ownership...",
+        placeholder:
+          kind === "skills"
+            ? "Describe your skill set with multiple lines if needed.\nExample:\nStrong in Rust, SQL, and backend system design."
+            : "Write a longer self evaluation if needed.\nExample:\nStrong ownership, good communication, and fast learning ability.",
       }),
     );
   } else {
@@ -668,14 +702,14 @@ function openEditDialog(kind, idOrNull) {
 function saveDialogItem() {
   const kind = document.getElementById("editKind").value;
   const id = document.getElementById("editId").value;
-  const isSimpleText = kind === "skills" || kind === "evaluations";
+  const isTextBlock = kind === "skills" || kind === "evaluations";
 
   const existing = state[kind].find((x) => x.id === id);
   const base = existing || { id, createdAt: nowIso() };
 
   let item;
-  if (isSimpleText) {
-    const text = clampText(document.getElementById("field_text").value).trim();
+  if (isTextBlock) {
+    const text = clampText(document.getElementById("field_text").value);
     item = { ...base, id, text, updatedAt: nowIso() };
   } else {
     const title = clampText(document.getElementById("field_title").value).trim();
