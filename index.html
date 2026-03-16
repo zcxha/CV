@@ -43,6 +43,58 @@
       <section class="content">
         <section class="view" id="view-library">
           <div class="grid">
+            <section class="card card-span-2" aria-label="Personal Information">
+              <div class="card-head">
+                <h2>Personal Information</h2>
+                <button class="btn btn-primary" id="btnSavePersonalInfo" type="button">Save</button>
+              </div>
+              <p class="help">Basic contact details shown at the top of exported resumes.</p>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="personal_fullName">Full Name</label>
+                  <input id="personal_fullName" class="input" type="text" placeholder="e.g. Li Si" />
+                </div>
+                <div class="field">
+                  <label for="personal_phone">Phone</label>
+                  <input id="personal_phone" class="input" type="text" placeholder="e.g. +86 138-0000-0000" />
+                </div>
+                <div class="field wide">
+                  <label for="personal_headline">Headline</label>
+                  <input
+                    id="personal_headline"
+                    class="input"
+                    type="text"
+                    placeholder="e.g. Backend Engineer / AI Infra Intern"
+                  />
+                </div>
+                <div class="field">
+                  <label for="personal_email">Email</label>
+                  <input id="personal_email" class="input" type="text" placeholder="e.g. name@example.com" />
+                </div>
+                <div class="field">
+                  <label for="personal_location">Location</label>
+                  <input id="personal_location" class="input" type="text" placeholder="e.g. Shanghai" />
+                </div>
+                <div class="field">
+                  <label for="personal_website">Website</label>
+                  <input id="personal_website" class="input" type="text" placeholder="e.g. https://example.com" />
+                </div>
+                <div class="field">
+                  <label for="personal_github">GitHub</label>
+                  <input id="personal_github" class="input" type="text" placeholder="e.g. github.com/username" />
+                </div>
+                <div class="field">
+                  <label for="personal_linkedin">LinkedIn</label>
+                  <input
+                    id="personal_linkedin"
+                    class="input"
+                    type="text"
+                    placeholder="e.g. linkedin.com/in/username"
+                  />
+                </div>
+              </div>
+            </section>
+
             <section class="card" aria-label="Education">
               <div class="card-head">
                 <h2>Education</h2>
@@ -197,4 +249,3 @@
     </dialog>
   </body>
 </html>
-

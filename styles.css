@@ -166,6 +166,10 @@ body {
   overflow: hidden;
 }
 
+.card-span-2 {
+  grid-column: 1 / -1;
+}
+
 .card h2 {
   margin: 0;
   font-family: var(--serif);
@@ -228,6 +232,12 @@ body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .btn {
@@ -469,5 +479,8 @@ body {
   .split {
     grid-template-columns: 1fr;
   }
-}
 
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

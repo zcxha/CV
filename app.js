@@ -4,6 +4,16 @@
  */
 
 const STORAGE_KEY = "cv_chunk_studio:v1";
+const PERSONAL_INFO_FIELDS = [
+  { key: "fullName", label: "Full Name", placeholder: "e.g. Li Si" },
+  { key: "headline", label: "Headline", placeholder: "e.g. Backend Engineer / AI Infra Intern" },
+  { key: "phone", label: "Phone", placeholder: "e.g. +86 138-0000-0000" },
+  { key: "email", label: "Email", placeholder: "e.g. name@example.com" },
+  { key: "location", label: "Location", placeholder: "e.g. Shanghai" },
+  { key: "website", label: "Website", placeholder: "e.g. https://example.com" },
+  { key: "github", label: "GitHub", placeholder: "e.g. github.com/username" },
+  { key: "linkedin", label: "LinkedIn", placeholder: "e.g. linkedin.com/in/username" },
+];
 
 function nowIso() {
   return new Date().toISOString();
@@ -19,10 +29,31 @@ function clampText(value) {
   return value.replaceAll("\r\n", "\n");
 }
 
+function normalizePersonalInfo(info) {
+  const safe = info && typeof info === "object" ? info : {};
+  const out = {};
+  for (const field of PERSONAL_INFO_FIELDS) {
+    out[field.key] = clampText(safe[field.key]).trim();
+  }
+  return out;
+}
+
+function personalInfoLines(info) {
+  const contact = [info.phone, info.email, info.location].filter(Boolean).join(" | ");
+  const links = [info.website, info.github, info.linkedin].filter(Boolean).join(" | ");
+  return {
+    name: info.fullName || "Resume",
+    headline: info.headline || "",
+    contact,
+    links,
+  };
+}
+
 function defaultState() {
   const initialProfileId = newId();
   return {
     version: 1,
+    personalInfo: normalizePersonalInfo(),
     education: "",
     internships: [],
     projects: [],
@@ -52,6 +83,7 @@ function normalizeState(parsed) {
   const base = defaultState();
   const safe = parsed && typeof parsed === "object" ? parsed : {};
   const merged = { ...base, ...safe };
+  merged.personalInfo = normalizePersonalInfo(merged.personalInfo);
   merged.education = clampText(merged.education);
   merged.internships = Array.isArray(merged.internships) ? merged.internships : [];
   merged.projects = Array.isArray(merged.projects) ? merged.projects : [];
@@ -155,6 +187,7 @@ function buildResumeModel(state) {
   };
 
   return {
+    personalInfo: normalizePersonalInfo(state.personalInfo),
     education: clampText(state.education).trim(),
     internships: getSelected("internships", profile.selection.internships),
     projects: getSelected("projects", profile.selection.projects),
@@ -166,8 +199,12 @@ function buildResumeModel(state) {
 function renderMarkdown(model) {
   const out = [];
   const push = (s = "") => out.push(s);
+  const info = personalInfoLines(model.personalInfo);
 
-  push("# Resume");
+  push(`# ${info.name}`);
+  if (info.headline) push(info.headline);
+  if (info.contact) push(info.contact);
+  if (info.links) push(info.links);
   push("");
 
   push("## Education");
@@ -240,6 +277,13 @@ function renderMarkdown(model) {
 function renderPlainText(model) {
   const out = [];
   const push = (s = "") => out.push(s);
+  const info = personalInfoLines(model.personalInfo);
+
+  push(info.name);
+  if (info.headline) push(info.headline);
+  if (info.contact) push(info.contact);
+  if (info.links) push(info.links);
+  push("");
 
   const head = (t) => {
     push(t);
@@ -297,11 +341,15 @@ function renderDocHtml(model) {
     h1{font-size:18pt;margin:0 0 14px;}
     h2{font-size:14pt;margin:18px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px;}
     h3{font-size:12pt;margin:14px 0 6px;}
+    .hero{margin-bottom:18px;}
+    .hero h1{margin-bottom:4px;}
+    .hero-line{font-size:11pt;line-height:1.4;margin:2px 0;}
     .meta{color:#555;font-size:10.5pt;margin-top:2px;}
     ul{margin:6px 0 10px 18px;}
     li{margin:2px 0;}
     pre{white-space:pre-wrap;font-family:inherit;font-size:11pt;line-height:1.35;margin:0;}
   `;
+  const info = personalInfoLines(model.personalInfo);
 
   const sectionLines = (text) => escapeHtml(clampText(text)).replaceAll("\n", "<br/>");
 
@@ -331,7 +379,12 @@ function renderDocHtml(model) {
   <style>${css}</style>
 </head>
 <body>
-  <h1>Resume</h1>
+  <div class="hero">
+    <h1>${escapeHtml(info.name)}</h1>
+    ${info.headline ? `<div class="hero-line">${escapeHtml(info.headline)}</div>` : ""}
+    ${info.contact ? `<div class="hero-line">${escapeHtml(info.contact)}</div>` : ""}
+    ${info.links ? `<div class="hero-line">${escapeHtml(info.links)}</div>` : ""}
+  </div>
   <h2>Education</h2>
   <pre>${sectionLines(model.education || "(empty)")}</pre>
 
@@ -461,10 +514,25 @@ function renderPicklist(container, items, kind, state) {
 
 let state = loadState();
 
+function syncInputValue(id, value) {
+  const el = document.getElementById(id);
+  if (el && document.activeElement !== el) el.value = value || "";
+}
+
+function readPersonalInfoForm() {
+  const info = {};
+  for (const field of PERSONAL_INFO_FIELDS) {
+    info[field.key] = clampText(document.getElementById(`personal_${field.key}`).value);
+  }
+  return normalizePersonalInfo(info);
+}
+
 function rerenderAll() {
   // Library view
-  const educationEl = document.getElementById("educationText");
-  if (document.activeElement !== educationEl) educationEl.value = state.education || "";
+  for (const field of PERSONAL_INFO_FIELDS) {
+    syncInputValue(`personal_${field.key}`, state.personalInfo[field.key]);
+  }
+  syncInputValue("educationText", state.education);
   renderList(document.getElementById("listInternships"), state.internships, "internships");
   renderList(document.getElementById("listProjects"), state.projects, "projects");
   renderList(document.getElementById("listSkills"), state.skills, "skills");
@@ -495,8 +563,10 @@ function rerenderAll() {
   // Stats
   const raw = localStorage.getItem(STORAGE_KEY) || "";
   const lines = [];
+  const personalInfoFilled = Object.values(state.personalInfo).filter(Boolean).length;
   lines.push(`Key: ${STORAGE_KEY}`);
   lines.push(`Approx bytes: ${bytesApprox(raw).toLocaleString()}`);
+  lines.push(`Personal info fields: ${personalInfoFilled}/${PERSONAL_INFO_FIELDS.length}`);
   lines.push(`Internships: ${state.internships.length}`);
   lines.push(`Projects: ${state.projects.length}`);
   lines.push(`Skills: ${state.skills.length}`);
@@ -730,6 +800,28 @@ function resetAll() {
 function wireUi() {
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => setActiveView(btn.getAttribute("data-view")));
+  });
+
+  let personalInfoSaveTimer = null;
+  const persistPersonalInfo = () => {
+    state.personalInfo = readPersonalInfoForm();
+    saveState(state);
+  };
+  for (const field of PERSONAL_INFO_FIELDS) {
+    const input = document.getElementById(`personal_${field.key}`);
+    input.addEventListener("input", () => {
+      state.personalInfo[field.key] = clampText(input.value);
+      if (personalInfoSaveTimer) clearTimeout(personalInfoSaveTimer);
+      personalInfoSaveTimer = setTimeout(() => {
+        state.personalInfo = readPersonalInfoForm();
+        saveState(state);
+      }, 220);
+    });
+  }
+  document.getElementById("btnSavePersonalInfo").addEventListener("click", () => {
+    if (personalInfoSaveTimer) clearTimeout(personalInfoSaveTimer);
+    persistPersonalInfo();
+    rerenderAll();
   });
 
   let educationSaveTimer = null;
